@@ -1,0 +1,104 @@
+services:
+  event-service:
+    build: ./services/event-service
+    ports:
+      - "5001:5001"
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://eventhub:changeme123@postgres:5432/eventhub
+      - REDIS_HOST=redis   # тільки для event-service
+      - APP_MESSAGE=Eveventhub event-service — running in Docker!
+    depends_on:
+      - postgres
+      - redis
+
+
+  registration-service:
+    build: ./services/registration-service
+    ports:
+      - "5002:5002"
+    restart: unless-stopped
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://eventhub:changeme123@postgres:5432/eventhub
+      - APP_MESSAGE=Eveventhub registration-service — running in Docker!
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./services/frontend
+    
+    restart: unless-stopped
+    depends_on:
+      - event-service
+      - registration-service
+
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/ssl/certs/event.crt:/etc/ssl/certs/event.crt:ro
+      - /etc/ssl/private/event.key:/etc/ssl/private/event.key:ro
+    restart: unless-stopped
+    depends_on:
+      - event-service
+      - registration-service
+      - frontend
+  
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=eventhub
+      - POSTGRES_USER=eventhub
+      - POSTGRES_PASSWORD=changeme123
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+volumes:
+  grafana-data:
+  prometheus-data:
+  postgres-data:

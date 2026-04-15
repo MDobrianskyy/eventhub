@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>EventHub</title>
+  <style>
+    body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; }
+    .event { border: 1px solid #ddd; padding: 16px; margin: 12px 0; border-radius: 6px; }
+    button { padding: 8px 16px; cursor: pointer; }
+    input, textarea { display: block; width: 100%; margin: 6px 0; padding: 8px; box-sizing: border-box; }
+    #create-form { border: 1px solid #aaa; padding: 16px; margin: 24px 0; border-radius: 6px; }
+    #register-form { border: 1px solid #aaa; padding: 16px; margin: 24px 0; border-radius: 6px; display: none; }
+  </style>
+</head>
+<body>
+
+  <h1>EventHub — платформа для онлайн-подій</h1>
+
+  <!-- Список подій -->
+  <h2>Події</h2>
+  <div id="events">Завантаження...</div>
+
+  <!-- Форма реєстрації -->
+  <div id="register-form">
+    <h2>Реєстрація на подію: <span id="register-event-title"></span></h2>
+    <input type="hidden" id="register-event-id">
+    <input type="text" id="register-name" placeholder="Ваше ім'я">
+    <input type="email" id="register-email" placeholder="Email">
+    <button onclick="submitRegistration()">Зареєструватись</button>
+    <button onclick="hideRegisterForm()">Скасувати</button>
+    <div id="register-result"></div>
+  </div>
+
+  <!-- Форма створення події -->
+  <div id="create-form">
+    <h2>Створити нову подію</h2>
+    <input type="text" id="new-title" placeholder="Назва події">
+    <textarea id="new-description" placeholder="Опис" rows="3"></textarea>
+    <input type="text" id="new-date" placeholder="Дата (напр. 2026-05-01)">
+    <input type="number" id="new-max" placeholder="Максимум учасників" value="100">
+    <button onclick="createEvent()">Створити</button>
+    <div id="create-result"></div>
+  </div>
+
+  <script>
+    // Завантажити список подій
+    function loadEvents() {
+      fetch('/api/events')
+        .then(res => res.json())
+        .then(data => {
+          if (data.length === 0) {
+            document.getElementById('events').innerHTML = '<p>Подій ще немає.</p>';
+            return;
+          }
+          document.getElementById('events').innerHTML = data.map(e => `
+            <div class="event">
+              <h3>${e.title}</h3>
+              <p>${e.description || ''}</p>
+              <p>Дата: ${e.date || 'не вказана'} | Максимум учасників: ${e.max_attendees}</p>
+              <button onclick="showRegisterForm(${e.id}, '${e.title}')">Зареєструватись</button>
+            </div>
+          `).join('');
+        })
+        .catch(() => {
+          document.getElementById('events').innerText = 'API недоступний';
+        });
+    }
+
+    // Показати форму реєстрації
+    function showRegisterForm(eventId, eventTitle) {
+      document.getElementById('register-event-id').value = eventId;
+      document.getElementById('register-event-title').innerText = eventTitle;
+      document.getElementById('register-form').style.display = 'block';
+      document.getElementById('register-result').innerText = '';
+    }
+
+    function hideRegisterForm() {
+      document.getElementById('register-form').style.display = 'none';
+    }
+
+    // Відправити реєстрацію
+    function submitRegistration() {
+      const event_id = document.getElementById('register-event-id').value;
+      const name     = document.getElementById('register-name').value;
+      const email    = document.getElementById('register-email').value;
+
+      fetch('/api/registrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ event_id: parseInt(event_id), name, email })
+      })
+        .then(res => res.json())
+        .then(() => {
+          document.getElementById('register-result').innerText = 'Успішно зареєстровано!';
+        })
+        .catch(() => {
+          document.getElementById('register-result').innerText = 'Помилка реєстрації';
+        });
+    }
+
+    // Створити нову подію
+    function createEvent() {
+      const title         = document.getElementById('new-title').value;
+      const description   = document.getElementById('new-description').value;
+      const date          = document.getElementById('new-date').value;
+      const max_attendees = parseInt(document.getElementById('new-max').value);
+
+      fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, date, max_attendees })
+      })
+        .then(res => res.json())
+        .then(() => {
+          document.getElementById('create-result').innerText = 'Подію створено!';
+          loadEvents(); // оновити список
+        })
+        .catch(() => {
+          document.getElementById('create-result').innerText = 'Помилка створення';
+        });
+    }
+
+    loadEvents();
+  </script>
+
+</body>
+</html>

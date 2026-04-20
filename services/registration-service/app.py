@@ -4,6 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 from prometheus_flask_exporter import PrometheusMetrics
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 metrics = PrometheusMetrics(app)
 
 # PostgreSQL connection

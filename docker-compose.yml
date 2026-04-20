@@ -6,12 +6,14 @@ services:
     restart: unless-stopped
     environment:
       - FLASK_ENV=production
-      - DATABASE_URL=postgresql://eventhub:changeme123@postgres:5432/eventhub
-      - REDIS_HOST=redis   # тільки для event-service
+      #- DATABASE_URL=postgresql://eventhub:changeme123@postgres:5432/eventhub
+      - DATABASE_URL=postgresql://eventhub:changeme123@eventhub.cd8ugu4sm6f5.eu-north-1.rds.amazonaws.com:5432/eventhub
+     # - REDIS_HOST=redis   # тільки для event-service
+      - REDIS_HOST=eventhub.rq58mk.0001.eun1.cache.amazonaws.com
       - APP_MESSAGE=Eveventhub event-service — running in Docker!
-    depends_on:
-      - postgres
-      - redis
+   # depends_on:
+     # - postgres
+    #  - redis
 
 
   registration-service:
@@ -21,10 +23,11 @@ services:
     restart: unless-stopped
     environment:
       - FLASK_ENV=production
-      - DATABASE_URL=postgresql://eventhub:changeme123@postgres:5432/eventhub
+      #- DATABASE_URL=postgresql://eventhub:changeme123@postgres:5432/eventhub
+      - DATABASE_URL=postgresql://eventhub:changeme123@eventhub.cd8ugu4sm6f5.eu-north-1.rds.amazonaws.com:5432/eventhub
       - APP_MESSAGE=Eveventhub registration-service — running in Docker!
-    depends_on:
-      - postgres
+   # depends_on:
+    #  - postgres
 
   frontend:
     build: ./services/frontend
@@ -84,21 +87,21 @@ services:
       - '--path.sysfs=/host/sys'
     restart: unless-stopped
 
-  postgres:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=eventhub
-      - POSTGRES_USER=eventhub
-      - POSTGRES_PASSWORD=changeme123
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    restart: unless-stopped
+#  postgres:
+ #   image: postgres:15
+  #  environment:
+   #   - POSTGRES_DB=eventhub
+    #  - POSTGRES_USER=eventhub
+     # - POSTGRES_PASSWORD=changeme123
+    #volumes:
+    #  - postgres-data:/var/lib/postgresql/data
+    #restart: unless-stopped
 
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
+  #redis:
+  #  image: redis:7-alpine
+  #  restart: unless-stopped
 
 volumes:
   grafana-data:
   prometheus-data:
-  postgres-data:
+#  postgres-data:

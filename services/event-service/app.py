@@ -80,7 +80,7 @@ def create_event():
     db.session.add(event)
     db.session.commit()
 
-    # інвалідуємо кеш списку — він тепер застарілий
+    # інвалідуємо кеш списку — він тепер застарілий for commit
     redis_client.delete('events_list')
 
     return jsonify(event.to_dict()), 201

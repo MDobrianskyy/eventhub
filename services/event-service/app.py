@@ -97,7 +97,11 @@ def delete_event(event_id):
     return '', 204
 
 with app.app_context():
-    db.create_all(checkfirst=True)
+    try:
+        db.create_all()
+    except Exception:
+        pass
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5001)

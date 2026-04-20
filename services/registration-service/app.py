@@ -55,7 +55,11 @@ def get_count(event_id):
     return jsonify({'event_id': event_id, 'count': count})
 
 with app.app_context():
-    db.create_all(checkfirst=True)
+    try:
+        db.create_all()
+    except Exception:
+        pass
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5002)

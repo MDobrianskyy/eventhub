@@ -25,6 +25,6 @@ RUN chown -R appuser:appgroup /app
 # Drop privileges
 USER appuser
 
-EXPOSE 5050
+EXPOSE 5001
 
-CMD ["gunicorn", "--bind", "0.0.0.0:5051", "--workers", "2", "--threads", "4", "app:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "2", "--threads", "4", "app:app"]
